@@ -2,19 +2,8 @@ import cv2
 import numpy as np
 
 class MammogramPreprocess:
-    """Class to preprocess mammogram images and adjust chaincodes."""
     
     def __init__(self, image, chaincode, flag, width, height):
-        """
-        Initialize the preprocessor.
-
-        Args:
-            image (np.ndarray): Input mammogram image (grayscale).
-            chaincode (list): Chaincode representing abnormality contour.
-            flag (int): 1 for single CLAHE, 2 for double CLAHE.
-            width (int): Target width after resizing.
-            height (int): Target height after resizing.
-        """
         self._image = image
         self._org_image = image.copy()
         self._chaincode = chaincode
@@ -23,7 +12,7 @@ class MammogramPreprocess:
         self._height = height
 
     def _crop_image(self):
-        """Crop black borders and non-breast regions from the image."""
+        #Crop black borders and non-breast regions from the image.
         image = self._image
         columns = int(image.shape[0] * 0.09)  # 9% from black side
         columns_breast_side = int(image.shape[1] * 0.025)  # 2.5% from breast side
@@ -44,7 +33,7 @@ class MammogramPreprocess:
         return image[rows:-rows]
 
     def _remove_text(self):
-        """Remove text artifacts from the image."""
+        #Remove text artifacts from the image
         image = self._image
         ret, thresh = cv2.threshold(image, 15, 255, cv2.THRESH_BINARY)
         kernel = np.ones((30, 30), np.uint8)
@@ -60,7 +49,7 @@ class MammogramPreprocess:
         return cv2.bitwise_and(image, image, mask=dilation)
 
     def _remove_side_effect1(self):
-        """Remove side effects after single CLAHE."""
+        #Remove side effects after single CLAHE.
         image = self._image
         ret, thresh = cv2.threshold(image, 20, 255, cv2.THRESH_BINARY)
         kernel = np.ones((30, 30), np.uint8)
@@ -72,7 +61,6 @@ class MammogramPreprocess:
         return cv2.bitwise_and(image, thresh, mask=dilation)
 
     def _remove_side_effect2(self):
-        """Remove side effects after double CLAHE."""
         image = self._image
         ret, thresh = cv2.threshold(image, 40, 255, cv2.THRESH_BINARY)
         kernel = np.ones((30, 30), np.uint8)
@@ -84,7 +72,6 @@ class MammogramPreprocess:
         return cv2.bitwise_and(image, thresh, mask=dilation)
 
     def _enhance_image(self):
-        """Enhance image contrast using CLAHE."""
         image = self._image
         if self._flag == 1:
             clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
@@ -100,7 +87,6 @@ class MammogramPreprocess:
             raise ValueError("Invalid flag: Use 1 for single CLAHE, 2 for double CLAHE")
 
     def _change_image_direction_to_right(self):
-        """Determine breast orientation (1 for left, -1 for right)."""
         image = self._image
         ret, thresh = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY)
         thresh = np.transpose(thresh)
@@ -109,7 +95,6 @@ class MammogramPreprocess:
         return 1 if freq[min(freq)] >= freq[max(freq)] else -1
 
     def _adjust_chaincode(self, change_or_not):
-        """Adjust chaincode based on cropping."""
         org_chaincode = self._chaincode
         column, row = self._org_image.shape[0], self._org_image.shape[1]
         new_chaincode = list(org_chaincode)
@@ -122,7 +107,6 @@ class MammogramPreprocess:
         return new_chaincode
 
     def _mirror_chaincode(self, change_or_not):
-        """Mirror chaincode if image is flipped."""
         if change_or_not == 1:
             new_chaincode = ["res", "res", ""]
             for code in self._chaincode[2:]:
@@ -134,11 +118,9 @@ class MammogramPreprocess:
         return self._chaincode
 
     def _flip_if_needed(self, change_or_not):
-        """Flip image if breast is on the left."""
         return cv2.flip(self._image, 1) if change_or_not == 1 else self._image
 
     def _get_4_corners_of_chaincode(self):
-        """Get bounding box corners from chaincode."""
         chaincode = self._chaincode
         column, row = int(chaincode[0]), int(chaincode[1])
         min_col, min_row, max_col, max_row = float('inf'), float('inf'), 0, 0
@@ -158,7 +140,6 @@ class MammogramPreprocess:
         return min_col, min_row, max_col, max_row
 
     def _scale_bounding_box(self, minx, miny, maxx, maxy):
-        """Scale bounding box to target dimensions."""
         x_scale, y_scale = self._height / self._image.shape[0], self._width / self._image.shape[1]
         return [
             int(np.round(minx * y_scale)),
@@ -168,13 +149,11 @@ class MammogramPreprocess:
         ]
 
     def plot_boundingbox(self, scaled_boundingbox):
-        """Draw bounding box on the image."""
         start_point = (scaled_boundingbox[0], scaled_boundingbox[1])
         end_point = (scaled_boundingbox[2], scaled_boundingbox[3])
         return cv2.rectangle(self._image, start_point, end_point, (255, 0, 0), 3)
 
     def preprocess(self):
-        """Execute the full preprocessing pipeline."""
         self._image = self._crop_image()
         self._image = self._remove_text()
         self._image = self._enhance_image()
