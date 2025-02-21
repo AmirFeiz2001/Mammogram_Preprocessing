@@ -2,18 +2,7 @@ import cv2
 import numpy as np
 
 def paint_abnormality(image, chain_code, color_value=255, width=5):
-    """
-    Paint abnormality contour on the image using chaincode.
 
-    Args:
-        image (np.ndarray): Input image.
-        chain_code (list): Chaincode for abnormality.
-        color_value (int): Color intensity for painting.
-        width (int): Width of the painted line.
-
-    Returns:
-        np.ndarray: Image with painted abnormality.
-    """
     image_copy = image.copy()
     column, row = int(chain_code[0]), int(chain_code[1])
     image_copy[row, column] = color_value
@@ -33,15 +22,6 @@ def paint_abnormality(image, chain_code, color_value=255, width=5):
     return image_copy
 
 def load_chaincode(file_path):
-    """
-    Load chaincode from an overlay file.
-
-    Args:
-        file_path (str): Path to the overlay file.
-
-    Returns:
-        list: Chaincode as a list of strings.
-    """
     with open(file_path, 'r') as f:
         lines = f.readlines()
         for i, line in enumerate(lines):
