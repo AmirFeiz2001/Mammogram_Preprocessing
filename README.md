@@ -14,3 +14,6 @@ This project preprocesses mammogram images by cropping, removing text, enhancing
    ```bash
    git clone https://github.com/AmirFeiz2001/Mammogram_Preprocessing.git
    cd Mammogram_Preprocessing
+
+
+![screenshot](download.png)
